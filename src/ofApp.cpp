@@ -15,7 +15,7 @@ RectShape::RectShape(float s, bool x) {
     speed = s;
     
     //width/height
-    width = (x) ? 50 : 100;
+    width = (x) ? 50 : 100;		//if true (1) = small, else bigger
     height = 20;    //denote height based on bool param. (1 = 50, 0 = 100)
     
     color = ofColor::yellow;      //default yellow
@@ -27,7 +27,7 @@ Rects3D::Rects3D(RectShape a, RectShape a1, RectShape a2) {
     aWidth = a.width;
     aHeight = a.height;
     
-    outerColor = a1.color;
+    subColor = a1.color;
     a1Width = a1.width;
     a1Height = a1.height;
     a1speed = a1.speed;
@@ -49,7 +49,19 @@ void ofApp::setup(){
     //adjust r2 speed
     r2.speed = 2;
     
-    //setup rect3D systems========================================================]]]
+	//set-up light----------------------------------------------
+	light.enable();
+	light.setPosition(500, 500, 500);
+	//light.setDiffuseColor(ofColor::yellow);
+
+	//set-up plane----------------------------------------------
+	plane.set(1200, 1100);
+	plane.move(500, 0, 500);
+	plane.rotateDeg(270, 1, 0, 0);		//rotate to (x, z) plane.
+	planeMaterial.setDiffuseColor(ofFloatColor::gray);
+	planeMaterial.setShininess(0.01);		
+
+    //set-up systems--------------------------------------------
     sys1.setup();
     sys2.setup();
 }
@@ -83,6 +95,7 @@ void ofApp::update(){
 void ofApp::draw(){
     
     if(!camMode) {
+		ofDisableLighting();
         r1.draw();
         r2.draw();
         
@@ -106,8 +119,12 @@ void ofApp::draw(){
         ofPopMatrix();
     }
     else {
+		ofEnableLighting();
         cam.begin();
-        //sys draw=================================================================]]
+		planeMaterial.begin();
+		plane.draw();
+		planeMaterial.end();
+        //sys draw
         sys1.draw();
         sys2.draw();
         cam.end();
@@ -120,8 +137,9 @@ void ofApp::keyPressed(int key){
         camMode = !camMode;     //toggle camera
         
         if(camMode) {       //reset cam position if entering cam mode
-            cam.setPosition ({ 500, 500, 1000 });
+            cam.setPosition ({500, 500, 1000});
             cam.lookAt({500, 0, 500}, {0, 1, 0});
+			cam.setFov(70);
             cam.setFarClip(10000);
         }
     }
@@ -152,12 +170,12 @@ void ofApp::mouseDragged(int x, int y, int button){
 void ofApp::mousePressed(int x, int y, int button){
     if(!camMode) {
         mouPos = glm::vec3(x, y, 0);       //save mouse position on click
-        if(r1.near(mouPos)) {
+        if(r1.within(mouPos)) {
             diffPos = mouPos - r1.pos;      //if within bounds, calculate and save difference
             dragSwitch1 = true;      //flip drag switch on
 
         }
-        else if(r2.near(mouPos)) {
+        else if(r2.within(mouPos)) {
             diffPos = mouPos - r2.pos;
             dragSwitch2 = true;
         }

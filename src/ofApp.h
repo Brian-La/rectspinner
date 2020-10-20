@@ -4,9 +4,19 @@
 
 class RectShape {
 public:
+
+	//data-------------------------------------------------
+	glm::vec3 pos;    //position vector of rectangle
+
+	float width = 200;      //rectangle width
+	float height = 50;    //...height
+	float deg = 0;          //degrees of rotation
+	float speed = 1;         //speed of rotation specified in parameter
+	ofColor color;      //color of rectangle
     //constructors-----------------------------------------
     RectShape(bool);
     RectShape(float, bool);
+
     
     //functions--------------------------------------------
     virtual void draw() {
@@ -26,23 +36,13 @@ public:
         if(deg > 360)  deg = speed;   //inline-if rotation reaches 359 deg, reset to initial deg
     }
     
-    virtual bool near(glm::vec3 p) {
-        if(p.x <= pos.x + height && p.x >= pos.x - height &&
-           p.y <= pos.y + height && p.y >= pos.y - height)
-            return true;
-        else
-            return false;
-    }     //override inside - check whether mouse is near rectangle
-    
-    //data-------------------------------------------------
-    glm::vec3 pos;      //position vector of rectangle
-    
-    float width = 200;      //rectangle width
-    float height = 50;    //...height
-    float deg = 0;          //degrees of rotation
-    float speed = 1;         //speed of rotation specified in parameter
-    ofColor color;      //color of rectangle
-    
+	virtual bool within(glm::vec3 p) {
+		if (p.x <= pos.x + height && p.x >= pos.x - height &&
+			p.y <= pos.y + height && p.y >= pos.y - height)
+			return true;
+		else
+			return false;
+	}     //override inside - check whether mouse is near rectangle
 };
 
 
@@ -51,13 +51,12 @@ public:
     Rects3D(RectShape, RectShape, RectShape);    //constructor using 3 rectangles
     
     //functions---------------------------------------------
-    void setup() {
-        //material.setDiffuseColor(ofFloatColor::turquoise);      //set diffuse color
-        
+    void setup() {   
         //main box
         b.setWidth(aWidth);
         b.setHeight(aHeight);
         b.setDepth(depth);
+		mainMat.setDiffuseColor(mainColor);
         
         //outer boxes - affix transformations to main box
         b1.setParent(b);
@@ -65,6 +64,7 @@ public:
         b1.setHeight(a1Height);
         b1.setDepth(depth / 4.0);
         b1.move(-b.getWidth() / 2.0, b.getHeight() / 2.0, 0);       //affix boxes on main box
+		subMat.setDiffuseColor(subColor);		//set diffuse color
         
         b2.setParent(b);
         b2.setWidth(a2Width);
@@ -78,28 +78,26 @@ public:
         b2.rotateDeg(-a2speed, {0, 1, 0});
     }
     void draw() {
-        //material.begin();
-        
-        //draw boxes
-        ofSetColor(mainColor);
+        //draw boxes & assign materials
+		mainMat.begin();
         b.draw();
-        ofSetColor(outerColor);
+		mainMat.end();
+		subMat.begin();
         b1.draw();
         b2.draw();
-
-        //material.end();
+		subMat.end();
     }
+
     ofNode& getNode();          //return node of system
     
     ofBoxPrimitive b, b1, b2;       //box primitives
-    ofMaterial material;        //keep material color
+    ofMaterial mainMat, subMat;        //material colors for 
+	ofFloatColor mainColor, subColor;
     
     float aWidth, aHeight, a1Width, a1Height, a2Width, a2Height;       //height/width
     float a1speed = 0;           //speed of rotation for smaller boxes
     float a2speed = 0;
     float depth = 100;        //depth of boxes
-    
-    ofColor mainColor, outerColor;
 };
 
 
@@ -128,16 +126,19 @@ class ofApp : public ofBaseApp{
     
     RectShape r1 = RectShape(true);
     RectShape r2 = RectShape(false);
-    RectShape r1a = RectShape(2, 0);
+    RectShape r1a = RectShape(4, 0);
     RectShape r1b = RectShape(5, 1);
     RectShape r2a = RectShape(7, 0);
-    RectShape r2b = RectShape(1, 1);      //rectangle calls
+    RectShape r2b = RectShape(3, 1);      //rectangle calls
     
-    Rects3D sys1 = Rects3D(r1, r1a, r2b);
-    Rects3D sys2 = Rects3D(r2, r2a, r2b);
-    
-    ofNode& n1 = sys1.getNode();
-    ofNode& n2 = sys2.getNode();
-    
-    ofEasyCam cam;
+	Rects3D sys1 = Rects3D(r1, r1a, r2b);
+	Rects3D sys2 = Rects3D(r2, r2a, r2b);
+
+	ofNode& n1 = sys1.getNode();
+	ofNode& n2 = sys2.getNode();
+
+	ofEasyCam cam;
+	ofLight light;
+	ofPlanePrimitive plane;
+	ofMaterial planeMaterial;
 };
